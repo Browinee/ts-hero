@@ -1,5 +1,5 @@
 import {Executor, RejectType, ResolveType} from "./types";
-
+import {isPromise} from "./utils";
 
 class Promise<T = any> {
     private readonly resolve!: ResolveType;
@@ -9,13 +9,14 @@ class Promise<T = any> {
     private reject_executor_value!: any;
     private resolve_then_callbacks: (() => void)[] = [];
     private reject_then_callbacks: (() => void)[] = [];
+
     constructor (executor: Executor) {
         this.resolve = (value: any): any => {
             if(this.status === "pending") {
                 this.resolve_executor_value = value;
                 this.status = "success"
                 console.log("value", value)
-                console.log("  this.resolve_then_callbacks",   this.resolve_then_callbacks)
+                console.log("  this.resolve_then_callbacks", this.resolve_then_callbacks)
                 this.resolve_then_callbacks.forEach(callback => callback());
             }
         }
@@ -38,7 +39,7 @@ class Promise<T = any> {
     then (resolveInThen: ResolveType, rejectInThen: RejectType) {
         return new Promise((resolve, reject) => {
             let result;
-            console.log("this",this)
+            console.log("this", this)
             if(this.status === "success") {
                 result = resolveInThen(this.resolve_executor_value)
                 resolve(result)
@@ -50,15 +51,20 @@ class Promise<T = any> {
             if(this.status === "pending") {
                 this.resolve_then_callbacks.push(() => {
                     result = resolveInThen(this.resolve_executor_value)
-                    resolve(result);
+                    if(isPromise(result)) {
+                        setTimeout(() => {
+                            resolve(result.resolve_then_callbacks)
+                        }, 5);
+                    } else {
+                        resolve(result);
+                    }
                 });
                 this.reject_then_callbacks.push(() => {
                     result = resolveInThen(this.resolve_executor_value)
                 });
             }
-        } )
+        })
     }
 }
-
 
 export default Promise;
