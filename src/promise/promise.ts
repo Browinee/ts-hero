@@ -7,17 +7,21 @@ class Promise<T = any> {
     private status: string = "pending";
     private resolve_executor_value!: any;
     private reject_executor_value!: any;
-
+    private resolve_then_callbacks: (() => void)[] = [];
+    private reject_then_callbacks: (() => void)[] = [];
     constructor (executor: Executor) {
         this.resolve = (value: any): any => {
             if(this.status === "pending") {
-                 this.resolve_executor_value = value;
+                this.resolve_executor_value = value;
                 this.status = "success"
+                console.log("value", value)
+                console.log("  this.resolve_then_callbacks",   this.resolve_then_callbacks)
+                this.resolve_then_callbacks.forEach(callback => callback());
             }
         }
-        this.reject = (value: any): any => {
+        this.reject = (reason: any): any => {
             if(this.status === "pending") {
-                this.reject_executor_value = value;
+                this.reject_executor_value = reason;
                 this.status = "fail"
             }
 
@@ -34,6 +38,7 @@ class Promise<T = any> {
     then (resolveInThen: ResolveType, rejectInThen: RejectType) {
         return new Promise((resolve, reject) => {
             let result;
+            console.log("this",this)
             if(this.status === "success") {
                 result = resolveInThen(this.resolve_executor_value)
                 resolve(result)
@@ -42,7 +47,16 @@ class Promise<T = any> {
                 result = rejectInThen(this.reject_executor_value)
                 reject(result)
             }
-        })
+            if(this.status === "pending") {
+                this.resolve_then_callbacks.push(() => {
+                    result = resolveInThen(this.resolve_executor_value)
+                    resolve(result);
+                });
+                this.reject_then_callbacks.push(() => {
+                    result = resolveInThen(this.resolve_executor_value)
+                });
+            }
+        } )
     }
 }
 

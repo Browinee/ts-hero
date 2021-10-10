@@ -8,13 +8,9 @@ const promise = new Promise((resolve, reject) => {
 });
 
 promise.then((resolveData) => {
-    console.log("resolve:", resolveData)
+    console.log("then 1 resolve:", resolveData)
+    return "ok"
 }, (rejectData) => {
     console.log("reject", rejectData)
-}).then((resolveData) => {
-    console.log("resolve2:", resolveData)
-}, (rejectData) => {
-    console.log("reject2", rejectData)
 })
-
 
