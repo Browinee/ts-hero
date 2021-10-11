@@ -15,8 +15,6 @@ class Promise<T = any> {
             if(this.status === "pending") {
                 this.resolve_executor_value = value;
                 this.status = "success"
-                console.log("value", value)
-                console.log("  this.resolve_then_callbacks", this.resolve_then_callbacks)
                 this.resolve_then_callbacks.forEach(callback => callback());
             }
         }
@@ -24,6 +22,7 @@ class Promise<T = any> {
             if(this.status === "pending") {
                 this.reject_executor_value = reason;
                 this.status = "fail"
+                this.reject_then_callbacks.forEach(callback => callback());
             }
 
         }
@@ -39,7 +38,6 @@ class Promise<T = any> {
     then (resolveInThen: ResolveType, rejectInThen: RejectType) {
         return new Promise((resolve, reject) => {
             let result;
-            console.log("this", this)
             if(this.status === "success") {
                 result = resolveInThen(this.resolve_executor_value)
                 resolve(result)
@@ -49,22 +47,37 @@ class Promise<T = any> {
                 reject(result)
             }
             if(this.status === "pending") {
-                this.resolve_then_callbacks.push(() => {
-                    result = resolveInThen(this.resolve_executor_value)
-                    if(isPromise(result)) {
-                        setTimeout(() => {
-                            resolve(result.resolve_then_callbacks)
-                        }, 5);
-                    } else {
-                        resolve(result);
-                    }
-                });
-                this.reject_then_callbacks.push(() => {
-                    result = resolveInThen(this.resolve_executor_value)
-                });
+                this.processManyAsyncAndSync(resolveInThen, rejectInThen, resolve, reject);
             }
         })
     }
+    processManyAsyncAndSync(resolveInThen: ResolveType, rejectInThen: RejectType, resolve: ResolveType, reject: RejectType) {
+        let result: any;
+        this.resolve_then_callbacks.push(() => {
+            result = resolveInThen(this.resolve_executor_value)
+            if(isPromise(result)) {
+                // method 1
+                // setTimeout(() => {
+                //     resolve(result.resolve_executor_value)
+                // }, 5);
+
+                // method 2
+                result.then((value) => {
+                    console.log("value", value);
+                    resolve(value)
+                }, (error) => {
+                    reject(error)
+                });
+
+            } else {
+                resolve(result);
+            }
+        });
+        this.reject_then_callbacks.push(() => {
+            result = resolveInThen(this.resolve_executor_value)
+        });
+    }
 }
+
 
 export default Promise;

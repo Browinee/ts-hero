@@ -8,8 +8,11 @@ const promise = new Promise((resolve, reject) => {
 });
 
 promise.then((resolveData) => {
-    console.log("then 1 resolve:", resolveData)
-    return "ok"
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(1)
+        }, 5)
+    });
 }, (rejectData) => {
     console.log("reject", rejectData)
 })
