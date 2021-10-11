@@ -51,7 +51,8 @@ class Promise<T = any> {
             }
         })
     }
-    processManyAsyncAndSync(resolveInThen: ResolveType, rejectInThen: RejectType, resolve: ResolveType, reject: RejectType) {
+
+    processManyAsyncAndSync (resolveInThen: ResolveType, rejectInThen: RejectType, resolve: ResolveType, reject: RejectType) {
         let result: any;
         this.resolve_then_callbacks.push(() => {
             result = resolveInThen(this.resolve_executor_value)
@@ -76,6 +77,31 @@ class Promise<T = any> {
         this.reject_then_callbacks.push(() => {
             result = resolveInThen(this.resolve_executor_value)
         });
+    }
+
+    static all (promises: Promise[]): Promise {
+
+        return new Promise((resolve, reject) => {
+            const allPromiseResolveSuccessValue: any[] = [];
+            const promisesLength = promises.length;
+            promises.forEach((promise, index) => {
+
+                promise.then((resolveSucess) => {
+                    processData(resolveSucess, index);
+                }, (rejectFail) => {
+                    // if one fail, all fail
+                    reject(rejectFail)
+                })
+            })
+
+            function processData (resolveSuccess: any, index: number) {
+                allPromiseResolveSuccessValue[index] = resolveSuccess;
+                if(allPromiseResolveSuccessValue.filter(Boolean).length === promisesLength) {
+                    resolve(allPromiseResolveSuccessValue);
+                }
+            }
+
+        })
     }
 }
 
